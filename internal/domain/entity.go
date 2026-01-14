@@ -7,6 +7,6 @@ type MarketTicker struct {
 	Timestamp int64
 
 	// 16 bytes group
-	Symbole  string
+	Symbol   string
 	Exchange string
 }
