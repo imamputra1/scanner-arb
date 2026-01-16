@@ -8,7 +8,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/imamputra1/arb-scanner/internal/adaptor/mock"
+	"github.com/imamputra1/arb-scanner/internal/adaptor/indodax"
+	"github.com/imamputra1/arb-scanner/internal/adaptor/tokocrypto"
 	"github.com/imamputra1/arb-scanner/internal/engine"
 )
 
@@ -16,25 +17,33 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
+	log.Printf("Scanner 0.1.1 Start")
+
 	// inisialisiasi adaptor (worker) dengan membuat 2 provider mock
 
-	indodaxMock := mock.NewProvider("INDODAX", 500000000)
-	tokoMock := mock.NewProvider("TOKOCRYPTO", 501000000)
+	idxProvider := indodax.NewProvider("btcidr", "BTC-IDR")
+	tokoProvider := tokocrypto.NewProvider("BTCBIDR", "BTC-IDR")
+
+	/*
+		// Background running
+		go idxProvider.Run(ctx)
+		go tokoProvider.Run(ctx)
+	*/
 
 	go func() {
-		if err := indodaxMock.Run(ctx); err != nil {
+		if err := idxProvider.Run(ctx); err != nil {
 			log.Println("indodax Error", err)
 		}
 	}()
 
 	go func() {
-		if err := tokoMock.Run(ctx); err != nil {
-			log.Println("toko Error", err)
+		if err := tokoProvider.Run(ctx); err != nil {
+			log.Println("tokocrypto Error", err)
 		}
 	}()
 
 	// initialisasion bot
-	bot := engine.NewArbitrageEngine(indodaxMock, tokoMock)
+	bot := engine.NewArbitrageEngine(idxProvider, tokoProvider)
 
 	// Run
 	go func() {
@@ -47,9 +56,9 @@ func main() {
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 
-	log.Println("Arbitrage Scanner running .... Press Ctrl+C to stop")
+	log.Println("Scanner running .... Press Ctrl+C to stop")
 	<-sigCh
 	log.Println("shutting down...")
 	time.Sleep(1 * time.Second)
-	log.Println("Bye...")
+	log.Println("Scanner stop ... run go run cmd/app/main.go")
 }
